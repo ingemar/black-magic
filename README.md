@@ -3,7 +3,7 @@ Black magic attribute initialization.
 
 Usage:
 ```ruby
-require 'black_magic'
+require "black/magic"
 
 class Demon
   attr_init(
@@ -17,15 +17,15 @@ class Demon
     puts "#{name} says 'bwoahahaha!'"
   end
 end
-demon = Demon.new(name: 'Lucy', source: 'fire')
+demon = Demon.new(name: "Lucy", source: "fire")
 demon.name
 # => "Lucy"
 demon.public_methods.include?(:source)
 # => false
-Demon.summon(name: 'Lucy', source: 'fire')
+Demon.summon(name: "Lucy", source: "fire")
 # Lucy says 'bwoahahaha!'
 # => nil
 ```
 
 ## Do not
-Be a rebel and run this in production or any other mission critical code. 😜
+Be a rebel and run this in production or any other mission critical code, I dare you. 😜
