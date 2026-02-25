@@ -1,15 +1,17 @@
-require "spec_helper"
+# frozen_string_literal: true
 
-RSpec.describe BlackMagic::Invocation do
+require "test_helper"
+
+class InvocationTest < Minitest::Test
   describe ".call" do
-    it "initializes a new object and call `#invoke`" do
+    it "initializes a new object and calls #invoke" do
       klass = Class.new
 
       BlackMagic::Invocation.call(klass, %i[attribute1 attribute2])
 
       object = klass.new(attribute1: "1", attribute2: "2")
-      expect(object.instance_variable_get(:@attribute1)).to eq("1")
-      expect(object.instance_variable_get(:@attribute2)).to eq("2")
+      assert_equal "1", object.instance_variable_get(:@attribute1)
+      assert_equal "2", object.instance_variable_get(:@attribute2)
     end
   end
 
@@ -21,8 +23,8 @@ RSpec.describe BlackMagic::Invocation do
       invoker.invoke
 
       object = klass.new(attribute1: "1", attribute2: "2")
-      expect(object.instance_variable_get(:@attribute1)).to eq("1")
-      expect(object.instance_variable_get(:@attribute2)).to eq("2")
+      assert_equal "1", object.instance_variable_get(:@attribute1)
+      assert_equal "2", object.instance_variable_get(:@attribute2)
     end
 
     it "returns itself" do
@@ -31,7 +33,7 @@ RSpec.describe BlackMagic::Invocation do
 
       result = invoker.invoke
 
-      expect(result).to eq(invoker)
+      assert_equal invoker, result
     end
   end
 
@@ -42,24 +44,21 @@ RSpec.describe BlackMagic::Invocation do
 
       invoker.with_class_method_call(:test_method)
 
-      expect(klass).to respond_to(:test_method)
+      assert_respond_to klass, :test_method
     end
 
-    it "initializes a new object of the class and call a method with the given name" do
-      klass = Class.new
-      object_double = double
-      allow(klass).to receive(:new).and_return(object_double)
-      allow(object_double).to receive(:test_method)
+    it "creates a class method that instantiates and calls the named method" do
+      klass = Class.new do
+        def test_method
+          [@attribute1, @attribute2]
+        end
+      end
       invoker = BlackMagic::Invocation.new(klass, %i[attribute1 attribute2])
       invoker.invoke.with_class_method_call(:test_method)
 
-      klass.test_method(attribute1: "1", attribute2: "2")
+      result = klass.test_method(attribute1: "1", attribute2: "2")
 
-      expect(klass).to have_received(:new).with(
-        attribute1: "1",
-        attribute2: "2"
-      )
-      expect(object_double).to have_received(:test_method)
+      assert_equal ["1", "2"], result
     end
 
     it "returns itself" do
@@ -68,7 +67,7 @@ RSpec.describe BlackMagic::Invocation do
 
       result = invoker.with_class_method_call(:test_method)
 
-      expect(result).to eq(invoker)
+      assert_equal invoker, result
     end
   end
 
@@ -81,7 +80,8 @@ RSpec.describe BlackMagic::Invocation do
       invoker.public(:attribute1, :attribute2)
 
       object = klass.new(attribute1: "1", attribute2: "2")
-      expect(object.public_methods).to include(:attribute1, :attribute2)
+      assert_includes object.public_methods, :attribute1
+      assert_includes object.public_methods, :attribute2
     end
 
     it "returns itself" do
@@ -90,7 +90,7 @@ RSpec.describe BlackMagic::Invocation do
 
       result = invoker.invoke.public(:attribute1)
 
-      expect(result).to eq(invoker)
+      assert_equal invoker, result
     end
   end
 end

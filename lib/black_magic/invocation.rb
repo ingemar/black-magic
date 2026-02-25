@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "erb"
 
 module BlackMagic
@@ -17,37 +19,27 @@ module BlackMagic
     end
 
     def with_class_method_call(method_name)
-      klass.define_singleton_method(method_name) do |**args|
-        new(**args).public_send(method_name)
+      klass.define_singleton_method(method_name) do |**attrs|
+        new(**attrs).public_send(method_name)
       end
       self
     end
 
-    def public(*args)
-      klass.send(:public, args)
+    def public(*attrs)
+      klass.send(:public, attrs)
       self
     end
 
     private
 
-    TEMPLATE = <<~ERB.freeze
-      def initialize(
-        <%- attributes.each do |attribute| -%>
-          <%= attribute %>:<%= ',' unless attribute == attributes.last %>
-        <%- end -%>
-      )
-      <%- attributes.each do |attribute| -%>
-        @<%= attribute %> = <%= attribute %>
-      <%- end -%>
+    TEMPLATE = <<~ERB
+      def initialize(%{attributes_kwargs})
+        %{instance_variable_setters}
       end
 
       private
 
-      attr_reader(
-      <%- attributes.each do |attribute| -%>
-        :<%= attribute %>,
-      <%- end -%>
-      )
+      attr_reader(%{attribute_names})
     ERB
 
     private_constant :TEMPLATE
@@ -55,11 +47,11 @@ module BlackMagic
     attr_reader :klass, :attributes
 
     def code
-      ::ERB.new(TEMPLATE, trim_mode: "-").result(env)
-    end
+      attributes_kwargs = attributes.map { "#{it}:" }.join(", ")
+      instance_variable_setters = attributes.map { "@#{it} = #{it}" }.join("\n")
+      attribute_names = attributes.map { ":#{it}" }.join(", ")
 
-    def env
-      binding.tap { |b| b.local_variable_set(:attributes, attributes) }
+      TEMPLATE % {attributes_kwargs:, instance_variable_setters:, attribute_names:}
     end
   end
 end
